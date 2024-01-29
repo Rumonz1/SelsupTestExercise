@@ -16,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,12 +45,12 @@ public class CrptApi {
         scheduler.scheduleAtFixedRate(releasePermitTask, 0, timeUnit.toSeconds(1), TimeUnit.SECONDS);
     }
 
-    public void createDocument(Document document, String signature) {
+    public void createDocument(Document doc, String sign) {
         try {
             requestSemaphore.acquire();
-            String documentJson = objectMapper.writeValueAsString(document);
+            String documentJson = objectMapper.writeValueAsString(doc);
             ObjectNode requestBody = objectMapper.readValue(documentJson, ObjectNode.class);
-            requestBody.put("signature", signature);
+            requestBody.put("sign", sign);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(apiUrl))
                     .header("Content-Type", "application/json")
@@ -115,5 +116,37 @@ public class CrptApi {
         private String tnved_code;
         private String uit_code;
         private String uitu_code;
+    }
+
+    public static void main(String[] args) {
+        CrptApi crptApi = new CrptApi(TimeUnit.SECONDS, 5);
+        Document doc = new Document(
+                new Description("1122334455"),
+                "document1",
+                "doc_in_progress",
+                "LP_INTRODUCE_GOODS",
+                true,
+                "1122112211",
+                "2233223322",
+                "1234567890",
+                LocalDate.parse("2024-01-23", DateTimeFormatter.ISO_DATE),
+                "type1",
+                List.of(new Product(
+                        "socks12",
+                        LocalDate.parse("2024-01-23", DateTimeFormatter.ISO_DATE),
+                        "bla222",
+                        "6767676767",
+                        "4545454545",
+                        LocalDate.parse("2024-01-23", DateTimeFormatter.ISO_DATE),
+                        "prod12",
+                        "prod123",
+                        "prod1234"
+                )),
+                LocalDate.parse("2020-01-23", DateTimeFormatter.ISO_DATE),
+                "nik90"
+        );
+
+        String sign = "sampleSignature";
+        crptApi.createDocument(doc, sign);
     }
 }
